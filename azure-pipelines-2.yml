@@ -1,0 +1,33 @@
+trigger: none  # Este pipeline no se dispara automáticamente; se puede disparar manual o desde otro pipeline
+
+variables:
+  ConnectedServiceName: '75ba180f-2512-4d04-9040-8d93490f84b3'
+  WebAppKind: 'webAppLinux'
+  WebAppName: 'udemyBillingAca'
+  StartupCommand: 'java -jar /home/site/wwwroot/billing-0.0.1-SNAPSHOT.jar'
+
+stages:
+- stage: 'Deploy'
+  displayName: 'Deploy to Azure App Service'
+  jobs:
+  - job: 'DeployJob'
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+    # 1. Descargar el artifact generado por el pipeline de build
+    - task: DownloadPipelineArtifact@2
+      displayName: 'Download artifact from build'
+      inputs:
+        buildType: 'latest'  # También puedes especificar un pipeline o un número de build
+        artifactName: 'released_package'
+        targetPath: '$(System.DefaultWorkingDirectory)/artifact'
+
+    # 2. Deploy a Azure App Service
+    - task: AzureRmWebAppDeployment@4
+      displayName: 'Deploy Azure App Service'
+      inputs:
+        azureSubscription: '$(ConnectedServiceName)'
+        appType: '$(WebAppKind)'
+        WebAppName: '$(WebAppName)'
+        packageForLinux: '$(System.DefaultWorkingDirectory)/artifact/Release/*.jar'
+        StartupCommand: '$(StartupCommand)'

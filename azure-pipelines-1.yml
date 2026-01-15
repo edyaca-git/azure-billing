@@ -1,0 +1,24 @@
+variables:
+  ConnectedServiceName: '75ba180f-2512-4d04-9040-8d93490f84b3'
+  WebAppKind: 'webAppLinux'
+  WebAppName: 'udemyBillingAca'
+  StartupCommand: 'java -jar /home/site/wwwroot/billing-0.0.1-SNAPSHOT.jar'
+
+steps:
+# 1. Maven Build
+- task: Maven@3
+  displayName: 'Build with Maven'
+  inputs:
+    mavenPomFile: 'pom.xml'
+    goals: 'clean package'
+    options: '-DskipTests'
+
+# 2. Deploy to Azure App Service
+- task: AzureRmWebAppDeployment@4
+  displayName: 'Deploy Azure App Service'
+  inputs:
+    azureSubscription: '$(ConnectedServiceName)'
+    appType: '$(WebAppKind)'
+    WebAppName: '$(WebAppName)'
+    packageForLinux: '$(System.DefaultWorkingDirectory)/target/billing-0.0.1-SNAPSHOT.jar'
+    StartupCommand: '$(StartupCommand)'
